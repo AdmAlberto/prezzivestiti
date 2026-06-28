@@ -69,20 +69,23 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-weight: bold; 
+            font-weight: 800; 
             font-size: 18px; 
             margin-right: 12px; 
             overflow: hidden; 
             flex-shrink: 0; 
-            border: 1px solid rgba(0,0,0,0.08);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-            background-color: white;
+            border: 2px solid rgba(0,0,0,0.1);
+            background-color: #fff;
+            text-transform: uppercase;
         }
-        .avatar-oro { border-color: var(--oro); }
-        .avatar-argento { border-color: var(--argento); }
-        .avatar-bronzo { border-color: var(--bronzo); }
-        .avatar-verde { border-color: var(--verde); }
-        .brand-avatar img { width: 100%; height: 100%; /* Sitemazione loghi: centraggio e adattamento */ object-fit: contain; padding: 2px; border-radius: 50%;}
+        /* Colori per le iniziali quando non si trova il logo */
+        .avatar-oro { border-color: var(--oro); color: #b8860b; }
+        .avatar-argento { border-color: var(--argento); color: #546e7a; }
+        .avatar-bronzo { border-color: var(--bronzo); color: #a0522d; }
+        .avatar-verde { border-color: var(--verde); color: #2e7d32; }
+        
+        /* Fix per loghi sgranati o tagliati */
+        .brand-avatar img { width: 100%; height: 100%; object-fit: contain; padding: 3px; border-radius: 50%;}
         
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #fdfdfd; padding: 10px; border-radius: 6px; border: 1px solid #eee;}
         .price-item { display: flex; flex-direction: column; }
@@ -136,6 +139,7 @@
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
 
+        // Funzione per ignorare accenti e caratteri speciali
         function normalizeString(str) {
             if (!str) return "";
             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -155,6 +159,31 @@
         function getColValue(row, keyword) {
             const key = Object.keys(row).find(k => k.toLowerCase().includes(keyword));
             return key ? row[key] : 'N/A';
+        }
+
+        // Funzione per la ricerca a cascata dei loghi (IL MOTORE MULTI-DOMINIO)
+        function handleImageError(img, cleanName, fallbackLetter) {
+            let attempt = parseInt(img.dataset.attempt || '0');
+            
+            // La lista delle estensioni da provare in ordine di importanza
+            const urls = [
+                `https://logos.hunter.io/${cleanName}.it`,
+                `https://logos.hunter.io/${cleanName}.fr`,
+                `https://logos.hunter.io/${cleanName}.es`,
+                `https://logos.hunter.io/${cleanName}.co.uk`,
+                `https://logos.hunter.io/${cleanName}.de`,
+                `https://logos.hunter.io/${cleanName}.net`
+            ];
+
+            if (attempt < urls.length) {
+                // Se fallisce, prova il prossimo della lista
+                img.src = urls[attempt];
+                img.dataset.attempt = attempt + 1;
+            } else {
+                // Se tutti i tentativi falliscono, cancella l'immagine e mostra l'iniziale
+                img.style.display = 'none';
+                img.parentElement.innerText = fallbackLetter;
+            }
         }
 
         async function fetchBrands() {
@@ -237,7 +266,7 @@
                         <button id="reportBtn" class="report-btn" onclick="reportBrand('${searchInput.value}')">⚠️ Segnala marca sconosciuta</button>
                     `;
                 } else {
-                    html += `<p>Nessuna marca trouvata per questo filtro.</p>`;
+                    html += `<p>Nessuna marca trovata per questo filtro.</p>`;
                 }
                 
                 html += `</div>`;
@@ -267,15 +296,18 @@
                     html += `<div class="cards-grid">`;
                     
                     groups[tier].forEach(brand => {
-                        // Sitemazione loghi: creazione dominio gestendo accenti come è
+                        // Creazione del dominio pulito gestendo accenti (es. Hermès diventa hermes)
                         const normalizedForDomain = normalizeString(brand.name);
                         const cleanDomainName = normalizedForDomain.replace(/[^a-z0-9]/g, '');
+                        const fallbackLetter = brand.name.trim().charAt(0).toUpperCase();
 
                         html += `
                         <div class="card fascia-${tier}">
                             <div class="brand-header">
                                 <div class="brand-avatar avatar-${tier}">
-                                    <img src="https://www.google.com/s2/favicons?domain=${cleanDomainName}.com&sz=128" alt="${brand.name}">
+                                    <img src="https://logos.hunter.io/${cleanDomainName}.com" 
+                                         onerror="handleImageError(this, '${cleanDomainName}', '${fallbackLetter}')" 
+                                         alt="${brand.name}">
                                 </div>
                                 <h3 class="brand-name">${brand.name}</h3>
                             </div>
