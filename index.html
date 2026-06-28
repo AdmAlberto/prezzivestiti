@@ -15,15 +15,16 @@
         
         .header { background-color: #2c4c2c; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
         .header h1 { margin: 0; font-size: 20px; }
+        .header p { margin: 4px 0 0 0; font-size: 13px; font-style: italic; opacity: 0.9; }
         
         /* Controlli (Ricerca, Filtri, Usura) */
-        .controls-container { background: white; padding: 10px 15px; position: sticky; top: 54px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .controls-container { background: white; padding: 10px 15px; position: sticky; top: 62px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
         #searchInput { width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #ccc; border-radius: 25px; outline: none; background-color: #f9f9f9; margin-bottom: 10px; transition: 0.3s;}
         #searchInput:focus { border-color: #2c4c2c; background-color: #fff; }
         
         /* Bottoni Filtro */
-        .filter-row { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .filter-row { display: flex; gap: 5px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 5px; }
         .filter-btn { flex: 1; min-width: 70px; padding: 6px 0; border: none; border-radius: 15px; font-size: 11px; font-weight: bold; color: white; opacity: 0.6; cursor: pointer; transition: 0.2s;}
         .filter-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .btn-oro { background-color: var(--oro); color: #000; }
@@ -32,7 +33,8 @@
         .btn-verde { background-color: var(--verde); }
         .btn-all { background-color: #333; }
         
-        /* Bottoni Usura */
+        /* Sezione Usura con Etichetta */
+        .condition-label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; padding-left: 2px; letter-spacing: 0.5px; }
         .condition-row { display: flex; gap: 5px; background: #eee; padding: 4px; border-radius: 8px;}
         .cond-btn { flex: 1; padding: 6px; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; color: #555; background: transparent; cursor: pointer; transition: 0.2s;}
         .cond-btn.active { background: white; color: #2c4c2c; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -80,7 +82,7 @@
         .avatar-argento { border-color: var(--argento); }
         .avatar-bronzo { border-color: var(--bronzo); }
         .avatar-verde { border-color: var(--verde); }
-        .brand-avatar img { width: 100%; height: 100%; object-fit: cover; padding: 2px; border-radius: 50%;}
+        .brand-avatar img { width: 100%; height: 100%; /* Sitemazione loghi: centraggio e adattamento */ object-fit: contain; padding: 2px; border-radius: 50%;}
         
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #fdfdfd; padding: 10px; border-radius: 6px; border: 1px solid #eee;}
         .price-item { display: flex; flex-direction: column; }
@@ -96,6 +98,7 @@
 
     <div class="header">
         <h1>Angoli di Mondo</h1>
+        <p>Prezzario Abbigliamento</p>
     </div>
 
     <div class="controls-container">
@@ -109,6 +112,7 @@
             <button class="filter-btn btn-verde" onclick="setFilter('verde', this)">VERDE</button>
         </div>
         
+        <span class="condition-label">Seleziona la condizione del capo:</span>
         <div class="condition-row">
             <button class="cond-btn active" onclick="setCondition(1, this)">✨ Pari al Nuovo</button>
             <button class="cond-btn" onclick="setCondition(0.7, this)">👕 Normale (-30%)</button>
@@ -233,7 +237,7 @@
                         <button id="reportBtn" class="report-btn" onclick="reportBrand('${searchInput.value}')">⚠️ Segnala marca sconosciuta</button>
                     `;
                 } else {
-                    html += `<p>Nessuna marca trovata per questo filtro.</p>`;
+                    html += `<p>Nessuna marca trouvata per questo filtro.</p>`;
                 }
                 
                 html += `</div>`;
@@ -263,8 +267,9 @@
                     html += `<div class="cards-grid">`;
                     
                     groups[tier].forEach(brand => {
-                        // Creiamo il presunto sito web del brand (es. da "Armani" a "armani.com")
-                        const cleanDomainName = brand.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        // Sitemazione loghi: creazione dominio gestendo accenti come è
+                        const normalizedForDomain = normalizeString(brand.name);
+                        const cleanDomainName = normalizedForDomain.replace(/[^a-z0-9]/g, '');
 
                         html += `
                         <div class="card fascia-${tier}">
