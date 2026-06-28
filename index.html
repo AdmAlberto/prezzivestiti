@@ -6,7 +6,6 @@
     <title>Angoli di Mondo - Prezzario</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* [TUTTO IL CSS RIMANE IDENTICO A QUELLO DELLA VERSIONE PRECEDENTE] */
         :root { --oro: #d4af37; --argento: #8a9597; --bronzo: #cd7f32; --verde: #4caf50; --bg-color: #f4f6f8; --text-main: #333; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { margin: 0; background-color: var(--bg-color); color: var(--text-main); }
@@ -41,7 +40,7 @@
 
     <div class="header">
         <h1>Angoli di Mondo</h1>
-        <p>Prezzario Cloud</p>
+        <p>Prezzario Cloud (Supabase)</p>
     </div>
 
     <div class="search-container">
@@ -53,35 +52,33 @@
     </div>
 
     <script>
-        // 1. INIZIALIZZA SUPABASE (INCOLLA QUI I TUOI DATI)
-        const supabaseUrl = 'https://tfhgowuzzduwleujerdu.supabase.co'; // <-- Incolla qui l'URL appena copiato
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaGdvd3V6emR1d2xldWplcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODI3MjEsImV4cCI6MjA5ODE1ODcyMX0.wZNWskDtYR0ZYfsraz1nglJ60RCtE7uSq2tYu3O5PYY'; // <-- La tua chiave
+        // CONFIGURAZIONE DEFINITIVA SUPABASE
+        const supabaseUrl = 'https://tfhgowuzzduwleujerdu.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaGdvd3V6emR1d2xldWplcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODI3MjEsImV4cCI6MjA5ODE1ODcyMX0.wZNWskDtYR0ZYfsraz1nglJ60RCtE7uSq2tYu3O5PYY';
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let db = []; // Qui salveremo i dati scaricati
+        let db = []; 
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
 
-        // 2. FUNZIONE PER SCARICARE I DATI ALL'AVVIO
         async function fetchBrands() {
             try {
-                // Scarica tutto il database dalla tabella 'brands'
+                // Legge la tabella 'brands'
                 const { data, error } = await sb.from('brands').select('*');
                 
                 if (error) throw error;
                 
-                db = data; // Salva i dati localmente per ricerca fulminea
+                db = data; 
                 
                 resultsContainer.innerHTML = '<div class="no-results">Database caricato! ('+db.length+' marche). Digita un nome.</div>';
-                searchInput.disabled = false; // Sblocca la barra di ricerca
+                searchInput.disabled = false; 
                 searchInput.focus();
             } catch (error) {
-                resultsContainer.innerHTML = '<div class="no-results" style="color:red;">Errore di connessione a Supabase.</div>';
+                resultsContainer.innerHTML = '<div class="no-results" style="color:red;">Errore di connessione a Supabase. Controlla di aver disattivato "RLS is enabled" sulla tabella brands in Supabase!</div>';
                 console.error("Errore:", error);
             }
         }
 
-        // 3. FUNZIONE DI RICERCA (Identica a prima, ma pesca da 'db' appena scaricato)
         function renderResults(query) {
             resultsContainer.innerHTML = ''; 
             if (query.trim() === '') {
@@ -89,7 +86,7 @@
                 return;
             }
 
-            const filtered = db.filter(b => b.name.toLowerCase().includes(query.toLowerCase()));
+            const filtered = db.filter(b => b.name && b.name.toLowerCase().includes(query.toLowerCase()));
 
             if (filtered.length === 0) {
                 resultsContainer.innerHTML = `
@@ -102,17 +99,20 @@
             }
 
             filtered.forEach(brand => {
-                const tierName = brand.tier.charAt(0).toUpperCase() + brand.tier.slice(1);
+                // Assicurati che "tier" non sia vuoto, se no usa "verde"
+                const fascia = brand.tier ? brand.tier.toLowerCase() : "verde";
+                const tierName = fascia.charAt(0).toUpperCase() + fascia.slice(1);
+                
                 const card = document.createElement('div');
-                card.className = `card fascia-${brand.tier.toLowerCase()}`;
+                card.className = `card fascia-${fascia}`;
                 card.innerHTML = `
                     <h3 class="brand-name">${brand.name}</h3>
                     <span class="tier-badge">Fascia ${tierName}</span>
                     <div class="price-grid">
-                        <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${brand.capispalla}</span></div>
-                        <div class="price-item"><span class="price-label">Abiti/Maglioni</span><span class="price-value">${brand.abiti}</span></div>
-                        <div class="price-item"><span class="price-label">Pantaloni/Scarpe</span><span class="price-value">${brand.pantaloni}</span></div>
-                        <div class="price-item"><span class="price-label">T-Shirt/Access.</span><span class="price-value">${brand.tshirt}</span></div>
+                        <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${brand.capispalla || 'N/A'}</span></div>
+                        <div class="price-item"><span class="price-label">Abiti/Maglioni</span><span class="price-value">${brand.abiti || 'N/A'}</span></div>
+                        <div class="price-item"><span class="price-label">Pantaloni/Scarpe</span><span class="price-value">${brand.pantaloni || 'N/A'}</span></div>
+                        <div class="price-item"><span class="price-label">T-Shirt/Access.</span><span class="price-value">${brand.tshirt || 'N/A'}</span></div>
                     </div>`;
                 resultsContainer.appendChild(card);
             });
@@ -120,7 +120,7 @@
 
         searchInput.addEventListener('input', (e) => renderResults(e.target.value));
 
-        // Avvia il download dei dati appena la pagina è pronta
+        // Avvio
         fetchBrands();
     </script>
 </body>
