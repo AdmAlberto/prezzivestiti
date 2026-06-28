@@ -3,37 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2c4c2c">
     <title>Angoli di Mondo - Prezzario</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --oro: #d4af37; --argento: #8a9597; --bronzo: #cd7f32; --verde: #4caf50; --bg-color: #f4f6f8; --text-main: #333; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { margin: 0; background-color: var(--bg-color); color: var(--text-main); }
+        body { margin: 0; background-color: var(--bg-color); color: var(--text-main); -webkit-tap-highlight-color: transparent;}
         
         .header { background-color: #2c4c2c; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
         .header h1 { margin: 0; font-size: 20px; }
-        .header p { margin: 5px 0 0 0; font-size: 12px; opacity: 0.9; }
         
-        .search-container { padding: 12px 15px; background: white; position: sticky; top: 62px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        #searchInput { width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #ccc; border-radius: 25px; outline: none; background-color: #f9f9f9; transition: all 0.3s;}
+        /* Controlli (Ricerca, Filtri, Usura) */
+        .controls-container { background: white; padding: 10px 15px; position: sticky; top: 54px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        #searchInput { width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #ccc; border-radius: 25px; outline: none; background-color: #f9f9f9; margin-bottom: 10px; transition: 0.3s;}
         #searchInput:focus { border-color: #2c4c2c; background-color: #fff; }
         
+        /* Bottoni Filtro Fascia */
+        .filter-row { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .filter-btn { flex: 1; min-width: 70px; padding: 6px 0; border: none; border-radius: 15px; font-size: 11px; font-weight: bold; color: white; opacity: 0.6; cursor: pointer; transition: 0.2s;}
+        .filter-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .btn-oro { background-color: var(--oro); color: #000; }
+        .btn-argento { background-color: var(--argento); }
+        .btn-bronzo { background-color: var(--bronzo); }
+        .btn-verde { background-color: var(--verde); }
+        .btn-all { background-color: #333; }
+        
+        /* Bottoni Usura */
+        .condition-row { display: flex; gap: 5px; background: #eee; padding: 4px; border-radius: 8px;}
+        .cond-btn { flex: 1; padding: 6px; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; color: #555; background: transparent; cursor: pointer; transition: 0.2s;}
+        .cond-btn.active { background: white; color: #2c4c2c; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* Area Risultati */
         .results { padding: 15px; max-width: 800px; margin: 0 auto; }
         #loading { text-align: center; color: #2c4c2c; font-weight: bold; padding: 20px; }
         .no-results { text-align: center; color: #666; padding: 30px 10px; font-style: italic; }
 
-        /* Stile delle Sezioni per Fascia */
         .tier-group { margin-bottom: 30px; }
-        .tier-title { padding: 10px 15px; margin: 0 0 15px 0; border-radius: 6px; color: #fff; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 125px; z-index: 98; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        
+        .tier-title { padding: 10px 15px; margin: 0 0 15px 0; border-radius: 6px; color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
         .bg-oro { background-color: var(--oro); color: #000; }
         .bg-argento { background-color: var(--argento); }
         .bg-bronzo { background-color: var(--bronzo); }
         .bg-verde { background-color: var(--verde); }
 
-        /* Griglia delle Card */
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        
         .card { background: white; border-radius: 8px; padding: 15px; border-left: 6px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .card.fascia-oro { border-left-color: var(--oro); }
         .card.fascia-argento { border-left-color: var(--argento); }
@@ -46,17 +62,34 @@
         .price-item { display: flex; flex-direction: column; }
         .price-label { color: #888; font-size: 10px; text-transform: uppercase; }
         .price-value { font-weight: bold; color: #d32f2f; font-size: 13px; }
+        
+        /* Bottone Segnalazione */
+        .report-btn { margin-top: 15px; width: 100%; padding: 10px; background-color: #ef5350; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer;}
+        .report-btn:disabled { background-color: #81c784; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>Angoli di Mondo</h1>
-        <p>Prezzario Abbigliamento</p>
     </div>
 
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="🔍 Cerca una marca (es. armani)..." autocomplete="off" disabled>
+    <div class="controls-container">
+        <input type="text" id="searchInput" placeholder="🔍 Cerca una marca..." autocomplete="off" disabled>
+        
+        <div class="filter-row">
+            <button class="filter-btn btn-all active" onclick="setFilter('all', this)">TUTTO</button>
+            <button class="filter-btn btn-oro" onclick="setFilter('oro', this)">ORO</button>
+            <button class="filter-btn btn-argento" onclick="setFilter('argento', this)">ARGENTO</button>
+            <button class="filter-btn btn-bronzo" onclick="setFilter('bronzo', this)">BRONZO</button>
+            <button class="filter-btn btn-verde" onclick="setFilter('verde', this)">VERDE</button>
+        </div>
+        
+        <div class="condition-row">
+            <button class="cond-btn active" onclick="setCondition(1, this)">✨ Pari al Nuovo</button>
+            <button class="cond-btn" onclick="setCondition(0.7, this)">👕 Normale (-30%)</button>
+            <button class="cond-btn" onclick="setCondition(0.4, this)">🧵 Da Sist. (-60%)</button>
+        </div>
     </div>
 
     <div class="results" id="resultsContainer">
@@ -69,16 +102,30 @@
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
         let catalog = []; 
+        let activeFilter = 'all'; // filtro categoria
+        let priceMultiplier = 1; // 1 = 100%, 0.7 = 70%, 0.4 = 40%
+
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
 
-        // 1. Funzione per ignorare maiuscole e accenti (Ricerca flessibile)
         function normalizeString(str) {
             if (!str) return "";
             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
         }
 
-        // 2. Lettore a prova di bomba per le colonne del CSV
+        // Funzione per moltiplicare i prezzi dentro le scritte (es. "40€ - 150€" diventa "28€ - 105€")
+        function calculatePrice(priceStr) {
+            if (!priceStr || priceStr === 'N/A') return 'N/A';
+            if (priceMultiplier === 1) return priceStr;
+            
+            // Trova tutti i numeri nella stringa e li moltiplica
+            return priceStr.replace(/\d+/g, (match) => {
+                let num = parseInt(match);
+                let discounted = Math.round(num * priceMultiplier);
+                return Math.max(1, discounted); // Assicura che il prezzo minimo sia almeno 1€
+            });
+        }
+
         function getColValue(row, keyword) {
             const key = Object.keys(row).find(k => k.toLowerCase().includes(keyword));
             return key ? row[key] : 'N/A';
@@ -89,7 +136,6 @@
                 const { data, error } = await sb.from('brands').select('*');
                 if (error) throw error;
 
-                // Trasformiamo i dati disordinati del CSV in un formato pulito
                 catalog = data.map(row => {
                     return {
                         name: getColValue(row, 'brand') !== 'N/A' ? getColValue(row, 'brand') : getColValue(row, 'name'),
@@ -101,35 +147,87 @@
                     };
                 });
 
-                // Ordina in ordine alfabetico
                 catalog.sort((a, b) => a.name.localeCompare(b.name));
-
                 searchInput.disabled = false; 
-                renderGroups(catalog); // Mostra tutto diviso per fasce all'avvio
+                applyFiltersAndSearch(); 
                 
             } catch (error) {
                 resultsContainer.innerHTML = '<div class="no-results" style="color:red;">Errore tecnico: ' + error.message + '</div>';
             }
         }
 
-        // 3. Funzione per renderizzare la pagina divisa in fasce
-        function renderGroups(list) {
+        // Gestione Click sui Filtri Categoria
+        function setFilter(tier, btnElement) {
+            activeFilter = tier;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            applyFiltersAndSearch();
+        }
+
+        // Gestione Click sul Deprezzamento
+        function setCondition(multiplier, btnElement) {
+            priceMultiplier = multiplier;
+            document.querySelectorAll('.cond-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            applyFiltersAndSearch();
+        }
+
+        // Segnalazione Marca
+        async function reportBrand(brandName) {
+            const btn = document.getElementById('reportBtn');
+            btn.innerText = "Invio in corso... ⏳";
+            btn.disabled = true;
+            
+            try {
+                const { error } = await sb.from('segnalazioni').insert([{ brand: brandName }]);
+                if (error) throw error;
+                btn.innerText = "Marca Segnalata! Grazie ✓";
+                btn.style.backgroundColor = "#4caf50";
+            } catch (err) {
+                btn.innerText = "Errore durante l'invio ❌";
+                btn.disabled = false;
+            }
+        }
+
+        // Motore principale che disegna la pagina
+        function applyFiltersAndSearch() {
+            const query = normalizeString(searchInput.value);
+            
+            // Filtra prima per ricerca testuale
+            let currentList = catalog;
+            if (query !== '') {
+                currentList = currentList.filter(b => normalizeString(b.name).includes(query));
+            }
+            
+            // Filtra per bottone categoria
+            if (activeFilter !== 'all') {
+                currentList = currentList.filter(b => normalizeString(b.tier).includes(activeFilter));
+            }
+
             resultsContainer.innerHTML = '';
             
-            if (list.length === 0) {
-                resultsContainer.innerHTML = `
+            // Schermata "Nessun Risultato" con Bottone Segnalazione
+            if (currentList.length === 0) {
+                let html = `
                     <div class="card fascia-verde" style="text-align:center; padding: 30px;">
-                        <h3 class="brand-name">Marca non trovata</h3>
-                        <p>Se non è nella lista, si considera <strong>Fascia Verde / Base</strong>.</p>
-                        <p style="color:#d32f2f; font-weight:bold;">Prezzo consigliato: 1€ - 5€</p>
-                    </div>`;
+                        <h3 class="brand-name">Nessun risultato</h3>`;
+                
+                if (query !== '') {
+                    html += `
+                        <p>Non troviamo <b>"${searchInput.value}"</b>. Se la marca non è nel prezzario, si considera <strong>Fascia Base / Verde</strong> (1€ - 5€).</p>
+                        <button id="reportBtn" class="report-btn" onclick="reportBrand('${searchInput.value}')">⚠️ Segnala marca sconosciuta</button>
+                    `;
+                } else {
+                    html += `<p>Nessuna marca trovata per questo filtro.</p>`;
+                }
+                
+                html += `</div>`;
+                resultsContainer.innerHTML = html;
                 return;
             }
 
-            // Dividiamo i brand nelle 4 categorie
             const groups = { oro: [], argento: [], bronzo: [], verde: [] };
-            
-            list.forEach(brand => {
+            currentList.forEach(brand => {
                 const t = normalizeString(brand.tier);
                 if (t.includes('oro')) groups.oro.push(brand);
                 else if (t.includes('argento')) groups.argento.push(brand);
@@ -137,26 +235,28 @@
                 else groups.verde.push(brand);
             });
 
-            // Generiamo l'HTML per ogni gruppo che contiene risultati
             const tierNames = ['oro', 'argento', 'bronzo', 'verde'];
             
             tierNames.forEach(tier => {
                 if (groups[tier].length > 0) {
-                    let html = `
-                    <div class="tier-group">
-                        <h2 class="tier-title bg-${tier}">Fascia ${tier.toUpperCase()}</h2>
-                        <div class="cards-grid">
-                    `;
+                    let html = `<div class="tier-group">`;
+                    
+                    // Se non stiamo filtrando per testo, mostra i titolettoni colorati
+                    if (query === '' && activeFilter === 'all') {
+                        html += `<h2 class="tier-title bg-${tier}">Fascia ${tier.toUpperCase()}</h2>`;
+                    }
+                    
+                    html += `<div class="cards-grid">`;
                     
                     groups[tier].forEach(brand => {
                         html += `
                         <div class="card fascia-${tier}">
                             <h3 class="brand-name">${brand.name}</h3>
                             <div class="price-grid">
-                                <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${brand.capispalla}</span></div>
-                                <div class="price-item"><span class="price-label">Abiti/Maglie</span><span class="price-value">${brand.abiti}</span></div>
-                                <div class="price-item"><span class="price-label">Pant/Scarpe</span><span class="price-value">${brand.pantaloni}</span></div>
-                                <div class="price-item"><span class="price-label">T-Shirt/Acc.</span><span class="price-value">${brand.tshirt}</span></div>
+                                <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${calculatePrice(brand.capispalla)}</span></div>
+                                <div class="price-item"><span class="price-label">Abiti/Maglie</span><span class="price-value">${calculatePrice(brand.abiti)}</span></div>
+                                <div class="price-item"><span class="price-label">Pant/Scarpe</span><span class="price-value">${calculatePrice(brand.pantaloni)}</span></div>
+                                <div class="price-item"><span class="price-label">T-Shirt/Acc.</span><span class="price-value">${calculatePrice(brand.tshirt)}</span></div>
                             </div>
                         </div>`;
                     });
@@ -167,18 +267,7 @@
             });
         }
 
-        // 4. Ascolta la digitazione e filtra in tempo reale
-        searchInput.addEventListener('input', (e) => {
-            const query = normalizeString(e.target.value);
-            
-            if (query === '') {
-                renderGroups(catalog); // Se la barra è vuota, mostra tutto
-            } else {
-                // Filtra il catalogo con la ricerca flessibile
-                const filtered = catalog.filter(b => normalizeString(b.name).includes(query));
-                renderGroups(filtered);
-            }
-        });
+        searchInput.addEventListener('input', applyFiltersAndSearch);
 
         // Avvio
         fetchBrands();
