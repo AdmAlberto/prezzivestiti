@@ -3,9 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#2c4c2c">
+    
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Angoli di Mondo","short_name":"Prezzario","display":"standalone","background_color":"#f4f6f8","theme_color":"#2c4c2c","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"}]}'>
+    
     <title>Angoli di Mondo - Prezzario</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -75,10 +83,10 @@
             border: 2px solid rgba(0,0,0,0.1);
             background-color: #fff;
             text-transform: uppercase;
-            cursor: pointer; /* Fa capire che è cliccabile */
+            cursor: pointer;
             transition: transform 0.2s;
         }
-        .brand-avatar:active { transform: scale(0.9); } /* Effetto "Molla" quando lo tocchi */
+        .brand-avatar:active { transform: scale(0.9); }
         
         .avatar-oro { border-color: var(--oro); color: #b8860b; }
         .avatar-argento { border-color: var(--argento); color: #546e7a; }
@@ -104,7 +112,6 @@
             cursor: pointer;
         }
         @keyframes fadeInModal { to { opacity: 1; } }
-        /* La versione "gigante" dell'avatar */
         .modal-avatar-enlarged {
             width: 220px !important; height: 220px !important; font-size: 90px !important; 
             margin: 0 !important; border-width: 6px !important;
@@ -268,12 +275,10 @@
             }
         };
 
-        // --- FUNZIONI PER LO ZOOM DEL LOGO ---
         window.openLogoModal = function(avatarElement) {
             const modal = document.getElementById('logoModal');
             const modalContent = document.getElementById('modalContent');
             
-            // Copia l'HTML e le classi del logo cliccato, e aggiunge la classe per renderlo gigante
             modalContent.innerHTML = avatarElement.innerHTML;
             modalContent.className = avatarElement.className + ' modal-avatar-enlarged';
             
