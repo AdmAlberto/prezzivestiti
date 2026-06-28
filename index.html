@@ -7,12 +7,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Prezzario">
     <meta name="theme-color" content="#2c4c2c">
     
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" href="icon.png?v=3">
+    <link rel="apple-touch-icon" href="icon.png?v=3">
     
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Angoli di Mondo","short_name":"Prezzario","display":"standalone","background_color":"#f4f6f8","theme_color":"#2c4c2c","icons":[{"src":"icon.png","sizes":"512x512","type":"image/png"}]}'>
+    <link rel="manifest" href="manifest.json?v=3">
     
     <title>Angoli di Mondo - Prezzario</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -390,13 +391,13 @@
                         const safeBrandName = brand.name.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                         
                         let initialUrls = generateLogoUrls(brand.name);
-                        let firstUrl = initialUrls.length > 0 ? initialUrls[0] : '';
+                        let initialUrlStr = initialUrls.length > 0 ? initialUrls[0] : '';
 
                         html += `
                         <div class="card fascia-${tier}">
                             <div class="brand-header">
                                 <div class="brand-avatar avatar-${tier}" onclick="openLogoModal(this)">
-                                    <img src="${firstUrl}" 
+                                    <img src="${initialUrlStr}" 
                                          data-brand="${safeBrandName}" 
                                          data-attempt="0"
                                          onerror="handleLogoError(this, '${fallbackLetter}')" 
