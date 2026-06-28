@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Angoli di Mondo - Prezzario</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* [TUTTO IL CSS RIMANE IDENTICO A QUELLO DELLA VERSIONE PRECEDENTE] */
+        :root { --oro: #d4af37; --argento: #8a9597; --bronzo: #cd7f32; --verde: #4caf50; --bg-color: #f4f6f8; --text-main: #333; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { margin: 0; background-color: var(--bg-color); color: var(--text-main); }
+        .header { background-color: #2c4c2c; color: white; padding: 20px 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .header h1 { margin: 0; font-size: 22px; }
+        .header p { margin: 5px 0 0 0; font-size: 12px; opacity: 0.8; }
+        .search-container { padding: 15px; background: white; position: sticky; top: 68px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        #searchInput { width: 100%; padding: 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; outline: none; }
+        #searchInput:focus { border-color: #2c4c2c; }
+        .results { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #ccc; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card.fascia-oro { border-left-color: var(--oro); }
+        .card.fascia-argento { border-left-color: var(--argento); }
+        .card.fascia-bronzo { border-left-color: var(--bronzo); }
+        .card.fascia-verde { border-left-color: var(--verde); }
+        .brand-name { font-size: 18px; margin: 0 0 5px 0; }
+        .tier-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 10px; }
+        .fascia-oro .tier-badge { background-color: var(--oro); color: #000; }
+        .fascia-argento .tier-badge { background-color: var(--argento); }
+        .fascia-bronzo .tier-badge { background-color: var(--bronzo); }
+        .fascia-verde .tier-badge { background-color: var(--verde); }
+        .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
+        .price-item { display: flex; flex-direction: column; }
+        .price-label { color: #666; font-size: 11px; text-transform: uppercase; }
+        .price-value { font-weight: bold; color: #d32f2f; font-size: 14px; }
+        .no-results { text-align: center; color: #666; padding: 20px; font-style: italic; }
+        #loading { text-align: center; color: #2c4c2c; font-weight: bold; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Angoli di Mondo</h1>
+        <p>Prezzario Cloud (Supabase)</p>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Inizia a digitare il brand..." autocomplete="off" disabled>
+    </div>
+
+    <div class="results" id="resultsContainer">
+        <div id="loading">Connessione al database in corso... ⏳</div>
+    </div>
+
+    <script>
+        // 1. INIZIALIZZA SUPABASE (INCOLLA QUI I TUOI DATI)
+        const supabaseUrl = 'https://TUO-PROGETTO.supabase.co';
+        const supabaseKey = 'LA-TUA-ANON-PUBLIC-KEY';
+        const sb = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let db = []; // Qui salveremo i dati scaricati
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+
+        // 2. FUNZIONE PER SCARICARE I DATI ALL'AVVIO
+        async function fetchBrands() {
+            try {
+                // Scarica tutto il database dalla tabella 'brands'
+                const { data, error } = await sb.from('brands').select('*');
+                
+                if (error) throw error;
+                
+                db = data; // Salva i dati localmente per ricerca fulminea
+                
+                resultsContainer.innerHTML = '<div class="no-results">Database caricato! ('+db.length+' marche). Digita un nome.</div>';
+                searchInput.disabled = false; // Sblocca la barra di ricerca
+                searchInput.focus();
+            } catch (error) {
+                resultsContainer.innerHTML = '<div class="no-results" style="color:red;">Errore di connessione a Supabase.</div>';
+                console.error("Errore:", error);
+            }
+        }
+
+        // 3. FUNZIONE DI RICERCA (Identica a prima, ma pesca da 'db' appena scaricato)
+        function renderResults(query) {
+            resultsContainer.innerHTML = ''; 
+            if (query.trim() === '') {
+                resultsContainer.innerHTML = '<div class="no-results">Digita il nome di una marca nella barra di ricerca.</div>';
+                return;
+            }
+
+            const filtered = db.filter(b => b.name.toLowerCase().includes(query.toLowerCase()));
+
+            if (filtered.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="card fascia-verde">
+                        <h3 class="brand-name">Nessun risultato per "${query}"</h3>
+                        <span class="tier-badge">Fascia Base / Verde</span>
+                        <p style="font-size:13px;">La marca non è in archivio. Prezza come <strong>Fast Fashion</strong> (1€ - 5€).</p>
+                    </div>`;
+                return;
+            }
+
+            filtered.forEach(brand => {
+                const tierName = brand.tier.charAt(0).toUpperCase() + brand.tier.slice(1);
+                const card = document.createElement('div');
+                card.className = `card fascia-${brand.tier.toLowerCase()}`;
+                card.innerHTML = `
+                    <h3 class="brand-name">${brand.name}</h3>
+                    <span class="tier-badge">Fascia ${tierName}</span>
+                    <div class="price-grid">
+                        <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${brand.capispalla}</span></div>
+                        <div class="price-item"><span class="price-label">Abiti/Maglioni</span><span class="price-value">${brand.abiti}</span></div>
+                        <div class="price-item"><span class="price-label">Pantaloni/Scarpe</span><span class="price-value">${brand.pantaloni}</span></div>
+                        <div class="price-item"><span class="price-label">T-Shirt/Access.</span><span class="price-value">${brand.tshirt}</span></div>
+                    </div>`;
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => renderResults(e.target.value));
+
+        // Avvia il download dei dati appena la pagina è pronta
+        fetchBrands();
+    </script>
+</body>
+</html>
