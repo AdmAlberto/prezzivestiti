@@ -75,12 +75,16 @@
             border: 2px solid rgba(0,0,0,0.1);
             background-color: #fff;
             text-transform: uppercase;
+            cursor: pointer; /* Fa capire che è cliccabile */
+            transition: transform 0.2s;
         }
+        .brand-avatar:active { transform: scale(0.9); } /* Effetto "Molla" quando lo tocchi */
+        
         .avatar-oro { border-color: var(--oro); color: #b8860b; }
         .avatar-argento { border-color: var(--argento); color: #546e7a; }
         .avatar-bronzo { border-color: var(--bronzo); color: #a0522d; }
         .avatar-verde { border-color: var(--verde); color: #2e7d32; }
-        .brand-avatar img { width: 100%; height: 100%; object-fit: contain; padding: 3px; border-radius: 50%;}
+        .brand-avatar img { width: 100%; height: 100%; object-fit: contain; padding: 3px; border-radius: 50%; pointer-events: none;}
         
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #fdfdfd; padding: 10px; border-radius: 6px; border: 1px solid #eee;}
         .price-item { display: flex; flex-direction: column; }
@@ -89,6 +93,24 @@
         
         .report-btn { margin-top: 15px; width: 100%; padding: 10px; background-color: #ef5350; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer;}
         .report-btn:disabled { background-color: #81c784; cursor: not-allowed; }
+
+        /* SCHERMATA ZOOM LOGO GIGANTE (Modal) */
+        .modal {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+            opacity: 0; animation: fadeInModal 0.2s forwards;
+            cursor: pointer;
+        }
+        @keyframes fadeInModal { to { opacity: 1; } }
+        /* La versione "gigante" dell'avatar */
+        .modal-avatar-enlarged {
+            width: 220px !important; height: 220px !important; font-size: 90px !important; 
+            margin: 0 !important; border-width: 6px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+            cursor: default;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +143,10 @@
         <div id="loading">Sincronizzazione catalogo... ⏳</div>
     </div>
 
+    <div id="logoModal" class="modal" onclick="closeLogoModal()">
+        <div id="modalContent"></div>
+    </div>
+
     <script>
         const supabaseUrl = 'https://tfhgowuzzduwleujerdu.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaGdvd3V6emR1d2xldWplcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODI3MjEsImV4cCI6MjA5ODE1ODcyMX0.wZNWskDtYR0ZYfsraz1nglJ60RCtE7uSq2tYu3O5PYY';
@@ -132,6 +158,50 @@
 
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
+
+        const customDomains = {
+            "alaïa": "maison-alaia.com",
+            "saint laurent (ysl)": "ysl.com",
+            "salvatore ferragamo (ferragamo)": "ferragamo.com",
+            "armani (compresi emporio, jeans, ea7, exchange)": "armani.com",
+            "ermenegildo zegna": "zegna.com",
+            "the north face": "thenorthface.com",
+            "alviero martini 1ª classe": "alvieromartini.it",
+            "comme des garçon": "comme-des-garcons.com",
+            "tiffany & co. (accessori/linee)": "tiffany.com",
+            "abercrombie & fitch": "abercrombie.com",
+            "u.s. polo assn.": "uspoloassn.com",
+            "c&a": "c-and-a.com",
+            "victoria's secret": "victoriassecret.com",
+            "g-star raw": "g-star.com",
+            "k-way": "k-way.com",
+            "levi's": "levi.com",
+            "max&co": "maxandco.com",
+            "p.a.r.o.s.h.": "parosh.com",
+            "birkentock": "birkenstock.com",
+            "conte of florence": "conteofflorence.com",
+            "duca d’aosta": "ducadaosta.com",
+            "robe di kappa": "robedikappa.com",
+            "roy roger's": "royrogers.it",
+            "meltin'pot": "meltinpot.com",
+            "melton pot": "meltinpot.com",
+            "areonautica": "aeronauticamilitareofficialstore.it",
+            "armata di mare": "armatadimare.com",
+            "bikini lovers": "bikinilovers.it",
+            "chiara ferragni brand": "chiaraferragnibrand.com",
+            "columbia sportswear": "columbia.com",
+            "dolce & gabbana": "dolcegabbana.com",
+            "e. marinella": "emarinella.com",
+            "gianfranco ferré": "gianfrancoferre.com",
+            "polo ralph lauren": "ralphlauren.com",
+            "roberta di camerino": "robertadicamerino.com",
+            "sorelle fontana": "sorellefontana.com",
+            "weekend max mara": "maxmara.com",
+            "carhartt wip": "carhartt-wip.com",
+            "lotto sport": "lotto.it",
+            "marina yachting": "marinayachting.it",
+            "nude project": "nude-project.com"
+        };
 
         function normalizeString(str) {
             if (!str) return "";
@@ -153,13 +223,17 @@
             return key ? row[key] : 'N/A';
         }
 
-        // --- IL NUOVO CERVELLO DEI LOGHI ---
-        // Genera la lista di siti probabili in base al nome
         function generateLogoUrls(brandName) {
             let urls = [];
+            let lowerName = brandName.toLowerCase().trim();
+            
+            if (customDomains[lowerName]) {
+                urls.push(`https://logos.hunter.io/${customDomains[lowerName]}`);
+                return urls;
+            }
+
             let norm = normalizeString(brandName);
 
-            // 1. Se ci sono parentesi (es. YSL), prova prima quell'acronimo!
             const match = norm.match(/\(([^)]+)\)/);
             if (match) {
                 let acronimo = match[1].replace(/[^a-z0-9]/g, '');
@@ -169,7 +243,6 @@
                 }
             }
 
-            // 2. Rimuove le parentesi e prova il nome pulito
             let clean = norm.replace(/\([^)]+\)/g, '').replace(/[^a-z0-9]/g, '');
             if (clean) {
                 urls.push(`https://logos.hunter.io/${clean}.com`);
@@ -179,7 +252,6 @@
             return urls;
         }
 
-        // Quando un logo fallisce, passa al prossimo sito probabile
         window.handleLogoError = function(img, fallbackLetter) {
             let brandName = img.dataset.brand;
             let attempt = parseInt(img.dataset.attempt || '0');
@@ -194,6 +266,22 @@
                 img.style.display = 'none';
                 img.parentElement.innerText = fallbackLetter;
             }
+        };
+
+        // --- FUNZIONI PER LO ZOOM DEL LOGO ---
+        window.openLogoModal = function(avatarElement) {
+            const modal = document.getElementById('logoModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            // Copia l'HTML e le classi del logo cliccato, e aggiunge la classe per renderlo gigante
+            modalContent.innerHTML = avatarElement.innerHTML;
+            modalContent.className = avatarElement.className + ' modal-avatar-enlarged';
+            
+            modal.style.display = 'flex';
+        };
+
+        window.closeLogoModal = function() {
+            document.getElementById('logoModal').style.display = 'none';
         };
 
         async function fetchBrands() {
@@ -296,14 +384,13 @@
                         const fallbackLetter = brand.name.trim().charAt(0).toUpperCase();
                         const safeBrandName = brand.name.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
                         
-                        // Prendiamo il primo URL probabile per iniziare
                         let initialUrls = generateLogoUrls(brand.name);
                         let firstUrl = initialUrls.length > 0 ? initialUrls[0] : '';
 
                         html += `
                         <div class="card fascia-${tier}">
                             <div class="brand-header">
-                                <div class="brand-avatar avatar-${tier}">
+                                <div class="brand-avatar avatar-${tier}" onclick="openLogoModal(this)">
                                     <img src="${firstUrl}" 
                                          data-brand="${safeBrandName}" 
                                          data-attempt="0"
