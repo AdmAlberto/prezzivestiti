@@ -9,116 +9,176 @@
         :root { --oro: #d4af37; --argento: #8a9597; --bronzo: #cd7f32; --verde: #4caf50; --bg-color: #f4f6f8; --text-main: #333; }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { margin: 0; background-color: var(--bg-color); color: var(--text-main); }
-        .header { background-color: #2c4c2c; color: white; padding: 20px 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .header h1 { margin: 0; font-size: 22px; }
-        .header p { margin: 5px 0 0 0; font-size: 12px; opacity: 0.8; }
-        .search-container { padding: 15px; background: white; position: sticky; top: 68px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        #searchInput { width: 100%; padding: 15px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; outline: none; }
-        #searchInput:focus { border-color: #2c4c2c; }
-        .results { padding: 15px; max-width: 600px; margin: 0 auto; }
-        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #ccc; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .header { background-color: #2c4c2c; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+        .header h1 { margin: 0; font-size: 20px; }
+        .header p { margin: 5px 0 0 0; font-size: 12px; opacity: 0.9; }
+        
+        .search-container { padding: 12px 15px; background: white; position: sticky; top: 62px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        #searchInput { width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #ccc; border-radius: 25px; outline: none; background-color: #f9f9f9; transition: all 0.3s;}
+        #searchInput:focus { border-color: #2c4c2c; background-color: #fff; }
+        
+        .results { padding: 15px; max-width: 800px; margin: 0 auto; }
+        #loading { text-align: center; color: #2c4c2c; font-weight: bold; padding: 20px; }
+        .no-results { text-align: center; color: #666; padding: 30px 10px; font-style: italic; }
+
+        /* Stile delle Sezioni per Fascia */
+        .tier-group { margin-bottom: 30px; }
+        .tier-title { padding: 10px 15px; margin: 0 0 15px 0; border-radius: 6px; color: #fff; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; position: sticky; top: 125px; z-index: 98; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        .bg-oro { background-color: var(--oro); color: #000; }
+        .bg-argento { background-color: var(--argento); }
+        .bg-bronzo { background-color: var(--bronzo); }
+        .bg-verde { background-color: var(--verde); }
+
+        /* Griglia delle Card */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        
+        .card { background: white; border-radius: 8px; padding: 15px; border-left: 6px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .card.fascia-oro { border-left-color: var(--oro); }
         .card.fascia-argento { border-left-color: var(--argento); }
         .card.fascia-bronzo { border-left-color: var(--bronzo); }
         .card.fascia-verde { border-left-color: var(--verde); }
-        .brand-name { font-size: 18px; margin: 0 0 5px 0; }
-        .tier-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 10px; }
-        .fascia-oro .tier-badge { background-color: var(--oro); color: #000; }
-        .fascia-argento .tier-badge { background-color: var(--argento); }
-        .fascia-bronzo .tier-badge { background-color: var(--bronzo); }
-        .fascia-verde .tier-badge { background-color: var(--verde); }
-        .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; background: #f9f9f9; padding: 10px; border-radius: 6px; }
+        
+        .brand-name { font-size: 17px; margin: 0 0 10px 0; color: #111; }
+        
+        .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #fdfdfd; padding: 10px; border-radius: 6px; border: 1px solid #eee;}
         .price-item { display: flex; flex-direction: column; }
-        .price-label { color: #666; font-size: 11px; text-transform: uppercase; }
-        .price-value { font-weight: bold; color: #d32f2f; font-size: 14px; }
-        .no-results { text-align: center; color: #666; padding: 20px; font-style: italic; }
-        #loading { text-align: center; color: #2c4c2c; font-weight: bold; padding: 20px; }
+        .price-label { color: #888; font-size: 10px; text-transform: uppercase; }
+        .price-value { font-weight: bold; color: #d32f2f; font-size: 13px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>Angoli di Mondo</h1>
-        <p>Prezzario Vestiti</p>
+        <p>Prezzario Abbigliamento</p>
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Inizia a digitare il brand..." autocomplete="off" disabled>
+        <input type="text" id="searchInput" placeholder="🔍 Cerca una marca (es. armani)..." autocomplete="off" disabled>
     </div>
 
     <div class="results" id="resultsContainer">
-        <div id="loading">Connessione al database in corso... ⏳</div>
+        <div id="loading">Sincronizzazione catalogo... ⏳</div>
     </div>
 
     <script>
-        // CONFIGURAZIONE DEFINITIVA SUPABASE
         const supabaseUrl = 'https://tfhgowuzzduwleujerdu.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaGdvd3V6emR1d2xldWplcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODI3MjEsImV4cCI6MjA5ODE1ODcyMX0.wZNWskDtYR0ZYfsraz1nglJ60RCtE7uSq2tYu3O5PYY';
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let db = []; 
+        let catalog = []; 
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
 
+        // 1. Funzione per ignorare maiuscole e accenti (Ricerca flessibile)
+        function normalizeString(str) {
+            if (!str) return "";
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        // 2. Lettore a prova di bomba per le colonne del CSV
+        function getColValue(row, keyword) {
+            const key = Object.keys(row).find(k => k.toLowerCase().includes(keyword));
+            return key ? row[key] : 'N/A';
+        }
+
         async function fetchBrands() {
             try {
-                // Legge la tabella 'brands'
                 const { data, error } = await sb.from('brands').select('*');
-                
                 if (error) throw error;
-                
-                db = data; 
-                
-                resultsContainer.innerHTML = '<div class="no-results">Database caricato! ('+db.length+' marche). Digita un nome.</div>';
+
+                // Trasformiamo i dati disordinati del CSV in un formato pulito
+                catalog = data.map(row => {
+                    return {
+                        name: getColValue(row, 'brand') !== 'N/A' ? getColValue(row, 'brand') : getColValue(row, 'name'),
+                        tier: getColValue(row, 'fascia'),
+                        capispalla: getColValue(row, 'capispalla'),
+                        abiti: getColValue(row, 'abiti'),
+                        pantaloni: getColValue(row, 'pantaloni') || getColValue(row, 'scarpe'),
+                        tshirt: getColValue(row, 'tshirt') || getColValue(row, 't-shirt') || getColValue(row, 'accessori')
+                    };
+                });
+
+                // Ordina in ordine alfabetico
+                catalog.sort((a, b) => a.name.localeCompare(b.name));
+
                 searchInput.disabled = false; 
-                searchInput.focus();
+                renderGroups(catalog); // Mostra tutto diviso per fasce all'avvio
+                
             } catch (error) {
-                resultsContainer.innerHTML = '<div class="no-results" style="color:red;">Errore di connessione a Supabase. Controlla di aver disattivato "RLS is enabled" sulla tabella brands in Supabase!</div>';
-                console.error("Errore:", error);
+                resultsContainer.innerHTML = '<div class="no-results" style="color:red;">Errore tecnico: ' + error.message + '</div>';
             }
         }
 
-        function renderResults(query) {
-            resultsContainer.innerHTML = ''; 
-            if (query.trim() === '') {
-                resultsContainer.innerHTML = '<div class="no-results">Digita il nome di una marca nella barra di ricerca.</div>';
-                return;
-            }
-
-            const filtered = db.filter(b => b.name && b.name.toLowerCase().includes(query.toLowerCase()));
-
-            if (filtered.length === 0) {
+        // 3. Funzione per renderizzare la pagina divisa in fasce
+        function renderGroups(list) {
+            resultsContainer.innerHTML = '';
+            
+            if (list.length === 0) {
                 resultsContainer.innerHTML = `
-                    <div class="card fascia-verde">
-                        <h3 class="brand-name">Nessun risultato per "${query}"</h3>
-                        <span class="tier-badge">Fascia Base / Verde</span>
-                        <p style="font-size:13px;">La marca non è in archivio. Prezza come <strong>Fast Fashion</strong> (1€ - 5€).</p>
+                    <div class="card fascia-verde" style="text-align:center; padding: 30px;">
+                        <h3 class="brand-name">Marca non trovata</h3>
+                        <p>Se non è nella lista, si considera <strong>Fascia Verde / Base</strong>.</p>
+                        <p style="color:#d32f2f; font-weight:bold;">Prezzo consigliato: 1€ - 5€</p>
                     </div>`;
                 return;
             }
 
-            filtered.forEach(brand => {
-                // Assicurati che "tier" non sia vuoto, se no usa "verde"
-                const fascia = brand.tier ? brand.tier.toLowerCase() : "verde";
-                const tierName = fascia.charAt(0).toUpperCase() + fascia.slice(1);
-                
-                const card = document.createElement('div');
-                card.className = `card fascia-${fascia}`;
-                card.innerHTML = `
-                    <h3 class="brand-name">${brand.name}</h3>
-                    <span class="tier-badge">Fascia ${tierName}</span>
-                    <div class="price-grid">
-                        <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${brand.capispalla || 'N/A'}</span></div>
-                        <div class="price-item"><span class="price-label">Abiti/Maglioni</span><span class="price-value">${brand.abiti || 'N/A'}</span></div>
-                        <div class="price-item"><span class="price-label">Pantaloni/Scarpe</span><span class="price-value">${brand.pantaloni || 'N/A'}</span></div>
-                        <div class="price-item"><span class="price-label">T-Shirt/Access.</span><span class="price-value">${brand.tshirt || 'N/A'}</span></div>
-                    </div>`;
-                resultsContainer.appendChild(card);
+            // Dividiamo i brand nelle 4 categorie
+            const groups = { oro: [], argento: [], bronzo: [], verde: [] };
+            
+            list.forEach(brand => {
+                const t = normalizeString(brand.tier);
+                if (t.includes('oro')) groups.oro.push(brand);
+                else if (t.includes('argento')) groups.argento.push(brand);
+                else if (t.includes('bronzo')) groups.bronzo.push(brand);
+                else groups.verde.push(brand);
+            });
+
+            // Generiamo l'HTML per ogni gruppo che contiene risultati
+            const tierNames = ['oro', 'argento', 'bronzo', 'verde'];
+            
+            tierNames.forEach(tier => {
+                if (groups[tier].length > 0) {
+                    let html = `
+                    <div class="tier-group">
+                        <h2 class="tier-title bg-${tier}">Fascia ${tier.toUpperCase()}</h2>
+                        <div class="cards-grid">
+                    `;
+                    
+                    groups[tier].forEach(brand => {
+                        html += `
+                        <div class="card fascia-${tier}">
+                            <h3 class="brand-name">${brand.name}</h3>
+                            <div class="price-grid">
+                                <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${brand.capispalla}</span></div>
+                                <div class="price-item"><span class="price-label">Abiti/Maglie</span><span class="price-value">${brand.abiti}</span></div>
+                                <div class="price-item"><span class="price-label">Pant/Scarpe</span><span class="price-value">${brand.pantaloni}</span></div>
+                                <div class="price-item"><span class="price-label">T-Shirt/Acc.</span><span class="price-value">${brand.tshirt}</span></div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    html += `</div></div>`;
+                    resultsContainer.innerHTML += html;
+                }
             });
         }
 
-        searchInput.addEventListener('input', (e) => renderResults(e.target.value));
+        // 4. Ascolta la digitazione e filtra in tempo reale
+        searchInput.addEventListener('input', (e) => {
+            const query = normalizeString(e.target.value);
+            
+            if (query === '') {
+                renderGroups(catalog); // Se la barra è vuota, mostra tutto
+            } else {
+                // Filtra il catalogo con la ricerca flessibile
+                const filtered = catalog.filter(b => normalizeString(b.name).includes(query));
+                renderGroups(filtered);
+            }
+        });
 
         // Avvio
         fetchBrands();
