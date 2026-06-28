@@ -17,13 +17,12 @@
         .header h1 { margin: 0; font-size: 20px; }
         .header p { margin: 4px 0 0 0; font-size: 13px; font-style: italic; opacity: 0.9; }
         
-        /* Controlli (Ricerca, Filtri, Usura) */
+        /* Controlli */
         .controls-container { background: white; padding: 10px 15px; position: sticky; top: 62px; z-index: 99; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
         #searchInput { width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #ccc; border-radius: 25px; outline: none; background-color: #f9f9f9; margin-bottom: 10px; transition: 0.3s;}
         #searchInput:focus { border-color: #2c4c2c; background-color: #fff; }
         
-        /* Bottoni Filtro */
         .filter-row { display: flex; gap: 5px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 5px; }
         .filter-btn { flex: 1; min-width: 70px; padding: 6px 0; border: none; border-radius: 15px; font-size: 11px; font-weight: bold; color: white; opacity: 0.6; cursor: pointer; transition: 0.2s;}
         .filter-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
@@ -33,7 +32,6 @@
         .btn-verde { background-color: var(--verde); }
         .btn-all { background-color: #333; }
         
-        /* Sezione Usura con Etichetta */
         .condition-label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; padding-left: 2px; letter-spacing: 0.5px; }
         .condition-row { display: flex; gap: 5px; background: #eee; padding: 4px; border-radius: 8px;}
         .cond-btn { flex: 1; padding: 6px; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; color: #555; background: transparent; cursor: pointer; transition: 0.2s;}
@@ -58,7 +56,7 @@
         .card.fascia-bronzo { border-left-color: var(--bronzo); }
         .card.fascia-verde { border-left-color: var(--verde); }
         
-        /* Grafica Intestazione Brand con Logo/Avatar */
+        /* Avatar & Grafica */
         .brand-header { display: flex; align-items: center; margin-bottom: 12px; }
         .brand-name { font-size: 17px; margin: 0; color: #111; font-weight: bold; }
         
@@ -78,13 +76,10 @@
             background-color: #fff;
             text-transform: uppercase;
         }
-        /* Colori per le iniziali quando non si trova il logo */
         .avatar-oro { border-color: var(--oro); color: #b8860b; }
         .avatar-argento { border-color: var(--argento); color: #546e7a; }
         .avatar-bronzo { border-color: var(--bronzo); color: #a0522d; }
         .avatar-verde { border-color: var(--verde); color: #2e7d32; }
-        
-        /* Fix per loghi sgranati o tagliati */
         .brand-avatar img { width: 100%; height: 100%; object-fit: contain; padding: 3px; border-radius: 50%;}
         
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #fdfdfd; padding: 10px; border-radius: 6px; border: 1px solid #eee;}
@@ -92,7 +87,6 @@
         .price-label { color: #888; font-size: 10px; text-transform: uppercase; }
         .price-value { font-weight: bold; color: #d32f2f; font-size: 13px; }
         
-        /* Bottone Segnalazione */
         .report-btn { margin-top: 15px; width: 100%; padding: 10px; background-color: #ef5350; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer;}
         .report-btn:disabled { background-color: #81c784; cursor: not-allowed; }
     </style>
@@ -139,7 +133,6 @@
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
 
-        // Funzione per ignorare accenti e caratteri speciali
         function normalizeString(str) {
             if (!str) return "";
             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -148,7 +141,6 @@
         function calculatePrice(priceStr) {
             if (!priceStr || priceStr === 'N/A') return 'N/A';
             if (priceMultiplier === 1) return priceStr;
-            
             return priceStr.replace(/\d+/g, (match) => {
                 let num = parseInt(match);
                 let discounted = Math.round(num * priceMultiplier);
@@ -161,30 +153,48 @@
             return key ? row[key] : 'N/A';
         }
 
-        // Funzione per la ricerca a cascata dei loghi (IL MOTORE MULTI-DOMINIO)
-        function handleImageError(img, cleanName, fallbackLetter) {
+        // --- IL NUOVO CERVELLO DEI LOGHI ---
+        // Genera la lista di siti probabili in base al nome
+        function generateLogoUrls(brandName) {
+            let urls = [];
+            let norm = normalizeString(brandName);
+
+            // 1. Se ci sono parentesi (es. YSL), prova prima quell'acronimo!
+            const match = norm.match(/\(([^)]+)\)/);
+            if (match) {
+                let acronimo = match[1].replace(/[^a-z0-9]/g, '');
+                if(acronimo) {
+                    urls.push(`https://logos.hunter.io/${acronimo}.com`);
+                    urls.push(`https://logos.hunter.io/${acronimo}.it`);
+                }
+            }
+
+            // 2. Rimuove le parentesi e prova il nome pulito
+            let clean = norm.replace(/\([^)]+\)/g, '').replace(/[^a-z0-9]/g, '');
+            if (clean) {
+                urls.push(`https://logos.hunter.io/${clean}.com`);
+                urls.push(`https://logos.hunter.io/${clean}.it`);
+            }
+
+            return urls;
+        }
+
+        // Quando un logo fallisce, passa al prossimo sito probabile
+        window.handleLogoError = function(img, fallbackLetter) {
+            let brandName = img.dataset.brand;
             let attempt = parseInt(img.dataset.attempt || '0');
             
-            // La lista delle estensioni da provare in ordine di importanza
-            const urls = [
-                `https://logos.hunter.io/${cleanName}.it`,
-                `https://logos.hunter.io/${cleanName}.fr`,
-                `https://logos.hunter.io/${cleanName}.es`,
-                `https://logos.hunter.io/${cleanName}.co.uk`,
-                `https://logos.hunter.io/${cleanName}.de`,
-                `https://logos.hunter.io/${cleanName}.net`
-            ];
+            let urls = generateLogoUrls(brandName);
+            attempt++;
 
             if (attempt < urls.length) {
-                // Se fallisce, prova il prossimo della lista
+                img.dataset.attempt = attempt;
                 img.src = urls[attempt];
-                img.dataset.attempt = attempt + 1;
             } else {
-                // Se tutti i tentativi falliscono, cancella l'immagine e mostra l'iniziale
                 img.style.display = 'none';
                 img.parentElement.innerText = fallbackLetter;
             }
-        }
+        };
 
         async function fetchBrands() {
             try {
@@ -205,7 +215,6 @@
                 catalog.sort((a, b) => a.name.localeCompare(b.name));
                 searchInput.disabled = false; 
                 applyFiltersAndSearch(); 
-                
             } catch (error) {
                 resultsContainer.innerHTML = '<div class="no-results" style="color:red;">Errore tecnico: ' + error.message + '</div>';
             }
@@ -229,7 +238,6 @@
             const btn = document.getElementById('reportBtn');
             btn.innerText = "Invio in corso... ⏳";
             btn.disabled = true;
-            
             try {
                 const { error } = await sb.from('segnalazioni').insert([{ brand: brandName }]);
                 if (error) throw error;
@@ -243,32 +251,23 @@
 
         function applyFiltersAndSearch() {
             const query = normalizeString(searchInput.value);
-            
             let currentList = catalog;
-            if (query !== '') {
-                currentList = currentList.filter(b => normalizeString(b.name).includes(query));
-            }
             
-            if (activeFilter !== 'all') {
-                currentList = currentList.filter(b => normalizeString(b.tier).includes(activeFilter));
-            }
+            if (query !== '') currentList = currentList.filter(b => normalizeString(b.name).includes(query));
+            if (activeFilter !== 'all') currentList = currentList.filter(b => normalizeString(b.tier).includes(activeFilter));
 
             resultsContainer.innerHTML = '';
             
             if (currentList.length === 0) {
-                let html = `
-                    <div class="card fascia-verde" style="text-align:center; padding: 30px;">
-                        <h3 class="brand-name">Nessun risultato</h3>`;
-                
+                let html = `<div class="card fascia-verde" style="text-align:center; padding: 30px;"><h3 class="brand-name">Nessun risultato</h3>`;
                 if (query !== '') {
                     html += `
-                        <p>Non troviamo <b>"${searchInput.value}"</b>. Se la marca non è nel prezzario, si considera <strong>Fascia Base / Verde</strong> (1€ - 5€).</p>
-                        <button id="reportBtn" class="report-btn" onclick="reportBrand('${searchInput.value}')">⚠️ Segnala marca sconosciuta</button>
+                        <p>Non troviamo <b>"${searchInput.value}"</b>. Prezza come <strong>Fascia Base / Verde</strong> (1€ - 5€).</p>
+                        <button id="reportBtn" class="report-btn" onclick="reportBrand('${searchInput.value.replace(/'/g, "\\'")}')">⚠️ Segnala marca sconosciuta</button>
                     `;
                 } else {
                     html += `<p>Nessuna marca trovata per questo filtro.</p>`;
                 }
-                
                 html += `</div>`;
                 resultsContainer.innerHTML = html;
                 return;
@@ -288,26 +287,28 @@
             tierNames.forEach(tier => {
                 if (groups[tier].length > 0) {
                     let html = `<div class="tier-group">`;
-                    
                     if (query === '' && activeFilter === 'all') {
                         html += `<h2 class="tier-title bg-${tier}">Fascia ${tier.toUpperCase()}</h2>`;
                     }
-                    
                     html += `<div class="cards-grid">`;
                     
                     groups[tier].forEach(brand => {
-                        // Creazione del dominio pulito gestendo accenti (es. Hermès diventa hermes)
-                        const normalizedForDomain = normalizeString(brand.name);
-                        const cleanDomainName = normalizedForDomain.replace(/[^a-z0-9]/g, '');
                         const fallbackLetter = brand.name.trim().charAt(0).toUpperCase();
+                        const safeBrandName = brand.name.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                        
+                        // Prendiamo il primo URL probabile per iniziare
+                        let initialUrls = generateLogoUrls(brand.name);
+                        let firstUrl = initialUrls.length > 0 ? initialUrls[0] : '';
 
                         html += `
                         <div class="card fascia-${tier}">
                             <div class="brand-header">
                                 <div class="brand-avatar avatar-${tier}">
-                                    <img src="https://logos.hunter.io/${cleanDomainName}.com" 
-                                         onerror="handleImageError(this, '${cleanDomainName}', '${fallbackLetter}')" 
-                                         alt="${brand.name}">
+                                    <img src="${firstUrl}" 
+                                         data-brand="${safeBrandName}" 
+                                         data-attempt="0"
+                                         onerror="handleLogoError(this, '${fallbackLetter}')" 
+                                         alt="${safeBrandName}">
                                 </div>
                                 <h3 class="brand-name">${brand.name}</h3>
                             </div>
@@ -328,7 +329,6 @@
 
         searchInput.addEventListener('input', applyFiltersAndSearch);
 
-        // Avvio
         fetchBrands();
     </script>
 </body>
