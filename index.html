@@ -74,12 +74,13 @@
             flex-shrink: 0; 
             border: 1px solid rgba(0,0,0,0.08);
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            background-color: white;
         }
-        .avatar-oro { background-color: var(--oro); color: #000; }
-        .avatar-argento { background-color: var(--argento); color: #fff; }
-        .avatar-bronzo { background-color: var(--bronzo); color: #fff; }
-        .avatar-verde { background-color: var(--verde); color: #fff; }
-        .brand-avatar img { width: 100%; height: 100%; object-fit: contain; background: white; padding: 2px; }
+        .avatar-oro { border-color: var(--oro); }
+        .avatar-argento { border-color: var(--argento); }
+        .avatar-bronzo { border-color: var(--bronzo); }
+        .avatar-verde { border-color: var(--verde); }
+        .brand-avatar img { width: 100%; height: 100%; object-fit: cover; padding: 2px; border-radius: 50%;}
         
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #fdfdfd; padding: 10px; border-radius: 6px; border: 1px solid #eee;}
         .price-item { display: flex; flex-direction: column; }
@@ -95,8 +96,6 @@
 
     <div class="header">
         <h1>Angoli di Mondo</h1>
-        <h3>Prezzi Abbigliamento</h3>
-        
     </div>
 
     <div class="controls-container">
@@ -111,7 +110,6 @@
         </div>
         
         <div class="condition-row">
-            <p>Seleziona la condizione del capo</p>
             <button class="cond-btn active" onclick="setCondition(1, this)">✨ Pari al Nuovo</button>
             <button class="cond-btn" onclick="setCondition(0.7, this)">👕 Normale (-30%)</button>
             <button class="cond-btn" onclick="setCondition(0.4, this)">🧵 Da Sist. (-60%)</button>
@@ -125,7 +123,7 @@
     <script>
         const supabaseUrl = 'https://tfhgowuzzduwleujerdu.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaGdvd3V6emR1d2xldWplcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODI3MjEsImV4cCI6MjA5ODE1ODcyMX0.wZNWskDtYR0ZYfsraz1nglJ60RCtE7uSq2tYu3O5PYY';
-        const sb = supabase.createClient(supabaseUrl, supabaseUrl === 'https://tfhgowuzzduwleujerdu.supabase.co' ? supabaseKey : '');
+        const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
         let catalog = []; 
         let activeFilter = 'all'; 
@@ -265,16 +263,14 @@
                     html += `<div class="cards-grid">`;
                     
                     groups[tier].forEach(brand => {
-                        // Genera un nome a prova di URL pulito per indovinare il dominio
+                        // Creiamo il presunto sito web del brand (es. da "Armani" a "armani.com")
                         const cleanDomainName = brand.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        const fallbackLetter = brand.name.charAt(0).toUpperCase();
 
                         html += `
                         <div class="card fascia-${tier}">
                             <div class="brand-header">
                                 <div class="brand-avatar avatar-${tier}">
-                                    <img src="https://logo.clearbit.com/${cleanDomainName}.com" 
-                                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerText='${fallbackLetter}';">
+                                    <img src="https://www.google.com/s2/favicons?domain=${cleanDomainName}.com&sz=128" alt="${brand.name}">
                                 </div>
                                 <h3 class="brand-name">${brand.name}</h3>
                             </div>
