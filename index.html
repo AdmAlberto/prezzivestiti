@@ -22,7 +22,7 @@
         #searchInput { width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #ccc; border-radius: 25px; outline: none; background-color: #f9f9f9; margin-bottom: 10px; transition: 0.3s;}
         #searchInput:focus { border-color: #2c4c2c; background-color: #fff; }
         
-        /* Bottoni Filtro Fascia */
+        /* Bottoni Filtro */
         .filter-row { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
         .filter-btn { flex: 1; min-width: 70px; padding: 6px 0; border: none; border-radius: 15px; font-size: 11px; font-weight: bold; color: white; opacity: 0.6; cursor: pointer; transition: 0.2s;}
         .filter-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
@@ -56,7 +56,30 @@
         .card.fascia-bronzo { border-left-color: var(--bronzo); }
         .card.fascia-verde { border-left-color: var(--verde); }
         
-        .brand-name { font-size: 17px; margin: 0 0 10px 0; color: #111; }
+        /* Grafica Intestazione Brand con Logo/Avatar */
+        .brand-header { display: flex; align-items: center; margin-bottom: 12px; }
+        .brand-name { font-size: 17px; margin: 0; color: #111; font-weight: bold; }
+        
+        .brand-avatar { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            font-size: 18px; 
+            margin-right: 12px; 
+            overflow: hidden; 
+            flex-shrink: 0; 
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .avatar-oro { background-color: var(--oro); color: #000; }
+        .avatar-argento { background-color: var(--argento); color: #fff; }
+        .avatar-bronzo { background-color: var(--bronzo); color: #fff; }
+        .avatar-verde { background-color: var(--verde); color: #fff; }
+        .brand-avatar img { width: 100%; height: 100%; object-fit: contain; background: white; padding: 2px; }
         
         .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; background: #fdfdfd; padding: 10px; border-radius: 6px; border: 1px solid #eee;}
         .price-item { display: flex; flex-direction: column; }
@@ -72,7 +95,6 @@
 
     <div class="header">
         <h1>Angoli di Mondo</h1>
-        <h2>Prezzi Abbigliamento e Accessori</h2>
     </div>
 
     <div class="controls-container">
@@ -100,11 +122,11 @@
     <script>
         const supabaseUrl = 'https://tfhgowuzzduwleujerdu.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmaGdvd3V6emR1d2xldWplcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODI3MjEsImV4cCI6MjA5ODE1ODcyMX0.wZNWskDtYR0ZYfsraz1nglJ60RCtE7uSq2tYu3O5PYY';
-        const sb = supabase.createClient(supabaseUrl, supabaseKey);
+        const sb = supabase.createClient(supabaseUrl, supabaseUrl === 'https://tfhgowuzzduwleujerdu.supabase.co' ? supabaseKey : '');
 
         let catalog = []; 
-        let activeFilter = 'all'; // filtro categoria
-        let priceMultiplier = 1; // 1 = 100%, 0.7 = 70%, 0.4 = 40%
+        let activeFilter = 'all'; 
+        let priceMultiplier = 1; 
 
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('resultsContainer');
@@ -114,16 +136,14 @@
             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
         }
 
-        // Funzione per moltiplicare i prezzi dentro le scritte (es. "40€ - 150€" diventa "28€ - 105€")
         function calculatePrice(priceStr) {
             if (!priceStr || priceStr === 'N/A') return 'N/A';
             if (priceMultiplier === 1) return priceStr;
             
-            // Trova tutti i numeri nella stringa e li moltiplica
             return priceStr.replace(/\d+/g, (match) => {
                 let num = parseInt(match);
                 let discounted = Math.round(num * priceMultiplier);
-                return Math.max(1, discounted); // Assicura che il prezzo minimo sia almeno 1€
+                return Math.max(1, discounted); 
             });
         }
 
@@ -157,7 +177,6 @@
             }
         }
 
-        // Gestione Click sui Filtri Categoria
         function setFilter(tier, btnElement) {
             activeFilter = tier;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
@@ -165,7 +184,6 @@
             applyFiltersAndSearch();
         }
 
-        // Gestione Click sul Deprezzamento
         function setCondition(multiplier, btnElement) {
             priceMultiplier = multiplier;
             document.querySelectorAll('.cond-btn').forEach(btn => btn.classList.remove('active'));
@@ -173,7 +191,6 @@
             applyFiltersAndSearch();
         }
 
-        // Segnalazione Marca
         async function reportBrand(brandName) {
             const btn = document.getElementById('reportBtn');
             btn.innerText = "Invio in corso... ⏳";
@@ -190,24 +207,20 @@
             }
         }
 
-        // Motore principale che disegna la pagina
         function applyFiltersAndSearch() {
             const query = normalizeString(searchInput.value);
             
-            // Filtra prima per ricerca testuale
             let currentList = catalog;
             if (query !== '') {
                 currentList = currentList.filter(b => normalizeString(b.name).includes(query));
             }
             
-            // Filtra per bottone categoria
             if (activeFilter !== 'all') {
                 currentList = currentList.filter(b => normalizeString(b.tier).includes(activeFilter));
             }
 
             resultsContainer.innerHTML = '';
             
-            // Schermata "Nessun Risultato" con Bottone Segnalazione
             if (currentList.length === 0) {
                 let html = `
                     <div class="card fascia-verde" style="text-align:center; padding: 30px;">
@@ -242,7 +255,6 @@
                 if (groups[tier].length > 0) {
                     let html = `<div class="tier-group">`;
                     
-                    // Se non stiamo filtrando per testo, mostra i titolettoni colorati
                     if (query === '' && activeFilter === 'all') {
                         html += `<h2 class="tier-title bg-${tier}">Fascia ${tier.toUpperCase()}</h2>`;
                     }
@@ -250,9 +262,19 @@
                     html += `<div class="cards-grid">`;
                     
                     groups[tier].forEach(brand => {
+                        // Genera un nome a prova di URL pulito per indovinare il dominio
+                        const cleanDomainName = brand.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const fallbackLetter = brand.name.charAt(0).toUpperCase();
+
                         html += `
                         <div class="card fascia-${tier}">
-                            <h3 class="brand-name">${brand.name}</h3>
+                            <div class="brand-header">
+                                <div class="brand-avatar avatar-${tier}">
+                                    <img src="https://logo.clearbit.com/${cleanDomainName}.com" 
+                                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerText='${fallbackLetter}';">
+                                </div>
+                                <h3 class="brand-name">${brand.name}</h3>
+                            </div>
                             <div class="price-grid">
                                 <div class="price-item"><span class="price-label">Capispalla</span><span class="price-value">${calculatePrice(brand.capispalla)}</span></div>
                                 <div class="price-item"><span class="price-label">Abiti/Maglie</span><span class="price-value">${calculatePrice(brand.abiti)}</span></div>
